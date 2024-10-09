@@ -1,0 +1,28 @@
+# config.yaml
+
+physical_constants:
+  K: 1.380649e-16  # Boltzmann constant in erg/K
+  Na: 6.02214076e23  # Avogadro's number, dimensionless
+
+numerical_parameters:
+  max_err: 1e-4  # Maximum allowed error in numerical integrations
+
+test_star:
+  M_test: 5.0  # Test star total mass
+  composition:
+    X_test: 0.75  # Fraction of Hydrogen
+    Y_test: 0.22  # Fraction of Helium
+  initial_conditions:
+    R_test: 11.5  # Total radius of the test star in 10^10 cm
+    L_test: 70  # Total luminosity of the test star in 10^33 erg/s
+    T_test: 2  # Central temperature of the test star in 10^7 K
+
+star_model:
+  M_total: 5.0  # Total mass of the star in 10^33 grams
+  composition:
+    X: 0.75  # Fraction of Hydrogen
+    Y: 0.20  # Fraction of Helium
+  initial_conditions:
+    R_total: 12  # Total radius of the star in 10^10 cm
+    L_total: 40  # Total luminosity of the star in 10^33 erg/s
+    T_central: 1.5  # Central temperature of the star in 10^7 K
