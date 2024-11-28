@@ -233,11 +233,13 @@ class StellarModel:
         else:
             epsilon_pp, nu_pp, cycle_pp, C_l_pp = self.pp_chain(T, P)
             epsilon_CNO, nu_CNO, cycle_CNO, C_l_CNO = self.CNO_cycle(T, P)
+
             if epsilon_pp > epsilon_CNO:
                 epsilon = epsilon_pp
                 nu = nu_pp
                 cycle = cycle_pp
                 C_l = C_l_pp
+
             else:
                 epsilon = epsilon_CNO
                 nu = nu_CNO
@@ -352,6 +354,7 @@ class StellarModel:
 
                 if abs((cal_T - est_T)/cal_T) < max_err:
                     break
+
                 else:
                     est_T = cal_T
 
@@ -370,9 +373,11 @@ class StellarModel:
             if (self.R[i+1] <= 0) and (type == "surface"):
                 i += 1
                 break
+
             elif (self.R[i+1] > R_down) and (type == "center"):
                 i += 1
                 break
+
             else:
                 i += 1
 
@@ -494,6 +499,7 @@ class StellarModel:
         # We make sure the step size is negative to integrate from the center to the surface
         if self.h < 0:
             h_extra = self.h
+
         else:
             h_extra = -self.h
 
@@ -523,35 +529,48 @@ class StellarModel:
         """
         # We make use of the reversal function to make sure we are integrating from the surface to the center
         self.reversal("surface")
+
         # We compute the surface layers of the star
         self.three_layers_surface()
+
         # We compute the radiative envelope inwards
         i = self.radiative_envelope()
+
         # We compute the convective core inwards
         self.convective_core(i, 0, "surface")
+
         # We compute the transition layer inwards
         down_values = self.transition_layer_down()
         R_down = down_values[0]
+
         # We make use of the reversal function to make sure we are integrating from the center to the surface
         self.reversal("center")
+
         # We compute the central layers of the star
         j = self.three_layers_core()
+
         # We compute the convective core outwards
         m = self.convective_core(j, R_down, "center")
+
         # We save the value of the layer where the transition layer is located
         self.transition_layer_index = m
+
         # We compute the transition layer outwards
         up_values = self.transition_layer_up(R_down, m)
+
         # We compute the error in the transition layer
         self.error = self.calculate_relative_errors(down_values, up_values)
+
         # We compute the extra layers
         R_extra, P_extra, T_extra, L_extra, M_extra = self.extra_layers()
+
         # We append the extra layers to the arrays
         self.R = np.append(self.R, R_extra[::-1])
         self.P = np.append(self.P, P_extra[::-1])
         self.T = np.append(self.T, T_extra[::-1])
         self.M = np.append(self.M, M_extra[::-1])
         self.L = np.append(self.L, L_extra[::-1])
+
         # We complete transport_parameter array with zeros
         self.transport_parameter = np.append(self.transport_parameter, np.zeros(len(R_extra)))
     
@@ -592,6 +611,7 @@ class StellarModel:
 
         # Print the central temperature that minimizes the total relative error
         print("Central Temperature that minimizes the Total Relative Error (K):", T_values[np.argmin(array_error)])
+
         # Print the minimum total relative error
         print("Minimum Total Relative Error (%):", np.min(array_error))
 
@@ -635,6 +655,7 @@ class StellarModel:
 
         for i, R_total in enumerate(R_values):
             self.R_total = R_total
+
             for j, L_total in enumerate(L_values):
                 self.L_total = L_total
                 self.optimal_temperature_calculation(T_values)
@@ -646,13 +667,18 @@ class StellarModel:
         i, j = np.unravel_index(np.argmin(matrix_error, axis=None), matrix_error.shape)
         self.R_total = R_values[i]
         self.L_total = L_values[j]
+
         print("----------------------------------------------------------------------------------")
+
         # Print the central temperature that minimizes the total relative error
         print("Central Temperature that minimizes the Total Relative Error (K):", self.T_central)
+
         # Print the total radius that minimizes the total relative error
         print("Total Radius that minimizes the Total Relative Error ($10^{10}$ cm):", self.R_total)
+
         # Print the total luminosity that minimizes the total relative error
         print("Total Luminosity that minimizes the Total Relative Error ($10^{33}$ erg/s):", self.L_total)
+
         # Print the minimum total relative error
         print("Minimum Total Relative Error (%):", self.error)
 
@@ -689,12 +715,15 @@ class StellarModel:
         self.nu = np.zeros_like(self.R)
         self.cycle = np.zeros_like(self.R, dtype=str)
         self.C_l = np.zeros_like(self.R)
+
         for i in range(len(self.T)):
             # Compute the density
             if self.T[i] == 0:
                 self.Rho[i] = 0
+
             else:
                 self.Rho[i] = self.mu * self.P[i] / (K * Na * self.T[i])
+
             # Compute the energy generation rate
             self.epsilon[i], self.nu[i], self.cycle[i], self.C_l[i] = self.energy_generation_rate(self.T[i], self.P[i])
 
@@ -711,16 +740,19 @@ class StellarModel:
             dependent_variable = self.M
             label = 'Mass'
             xlabel = "Normalized Radius"
+
         elif independent_variable == 'mass':
             independent_variable = self.M / self.M[-1]
             dependent_variable = self.R
             label = 'Radius'
             xlabel = "Normalized Mass"
+
         else:
             print("Invalid independent variable. Please choose 'radius' or 'mass'.")
 
         if variable == 'all':
             plt.figure()
+
             if  vertical_line:
                 plt.axvline(x=self.R[self.transition_layer_index] / self.R[-1], color='k', linestyle='--', label = 'Transition Layer')
             plt.plot(independent_variable, dependent_variable / dependent_variable[-1], label = label)
@@ -794,6 +826,7 @@ class StellarModel:
         Parameters:
         - filename: The name of the file to save the data.
         """
+        
         # Create a DataFrame with the star's properties
         df = pd.DataFrame({
             'Radius': self.R,
@@ -806,5 +839,6 @@ class StellarModel:
             'Transport Parameter': self.transport_parameter,
             'Cycle': self.cycle,
         })
+
         # Save the DataFrame to a CSV file
-        df.to_csv(filename, index=False)
+        df.to_csv(f"../data/{filename}.csv", index=False)
