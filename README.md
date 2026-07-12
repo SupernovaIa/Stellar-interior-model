@@ -9,7 +9,26 @@ The process involves integrating from the star's surface inward and from the cor
 
 ### Assumptions
 
-WIP
+The model relies on the following simplifying assumptions:
+
+- **Massive main-sequence star** with `M > 2 M☉` (the example configuration uses
+  `M = 5 × 10^33 g`), so the interior is split into an **adiabatic convective core**
+  and a **radiative envelope**, matched at a transition layer.
+- **Static, hydrostatic structure**: the star does not evolve in time.
+- **Fully ionized ideal gas** as the equation of state, with radiation pressure
+  neglected: `ρ = μ P / (k_B N_A T)`, and mean molecular weight
+  `μ = 1 / (2X + 0.75Y + 0.5Z)`.
+- **Uniform chemical composition** (`X`, `Y`, `Z` constant throughout the star).
+- **Nuclear energy generation** from the pp chain and the CNO cycle, with
+  temperature-dependent exponents (`ε ∝ ρ T^ν`, piecewise in temperature).
+- **Energy transport**: radiative diffusion in the envelope (a Kramers-type
+  opacity is folded into the integration constants) and adiabatic convection in
+  the core, modelled as a polytrope `P = k T^(5/2)` (index `n = 3/2`, `γ = 5/3`).
+- The **convective boundary** is placed where the transport parameter (`n + 1`)
+  drops below `2.5`.
+- **Scaled CGS units** are used throughout: mass in `10^33 g`, radius in
+  `10^10 cm`, luminosity in `10^33 erg/s`, temperature in `10^7 K` and pressure
+  in `10^15 dyn/cm²`.
 
 
 ## 💻 Project Structure
@@ -58,7 +77,31 @@ uv run --group dev pytest
 
 ## 📊 Results
 
-WIP
+The three initially unknown parameters (central temperature, total radius and
+total luminosity) are refined by **minimizing the total relative error at the
+transition layer** — the quadratic sum of the relative differences in
+`(r, P, T, L, M)` between the inward (surface → center) and outward
+(center → surface) integrations.
+
+For the example configuration (`M = 5 × 10^33 g`, `X = 0.75`, `Y = 0.22`):
+
+- A raw integration with the initial guesses yields a total relative error of
+  **≈ 67.8 %**.
+- Optimizing the central temperature over `[1.5, 2.5) × 10^7 K` reduces it to
+  **16.82 %** at `T_central = 1.95 × 10^7 K`.
+- A full grid search over `(R_total, L_total)` (see
+  `optimal_grid_calculation` in `src/star_class.py`) reduces the error further.
+
+Once solved, the model provides:
+
+- Radial profiles of pressure, temperature, density, enclosed mass, luminosity
+  and energy generation rate.
+- The location of the convective-core / radiative-envelope boundary.
+- Derived observables (effective temperature, spectral type and position on the
+  Hertzsprung–Russell diagram).
+
+The full workflow — optimization, profile plots and HR-diagram classification —
+is reproduced in `notebook/model_execution.ipynb`.
 
 
 ## 🧠 Conclusions
