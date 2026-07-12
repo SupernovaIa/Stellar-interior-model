@@ -49,6 +49,12 @@ The simulation parameters (chemical composition, initial radius, luminosity and
 central temperature) are defined in `config/config.yaml`, the single source of
 truth for the configuration.
 
+To run the test suite:
+
+```bash
+uv run --group dev pytest
+```
+
 
 ## 📊 Results
 
