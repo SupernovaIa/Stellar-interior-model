@@ -38,6 +38,7 @@ Detailed documentation lives in [`docs/`](docs/):
 - [Usage](docs/usage.md) — installation, configuration, running and testing.
 - [Results](docs/results.md) — optimization, profiles and stellar classification.
 - [Code structure](docs/code-structure.md) — a tour of the `StellarModel` class.
+- [Roadmap](docs/roadmap.md) — planned extensions and open work.
 
 ## Author
 

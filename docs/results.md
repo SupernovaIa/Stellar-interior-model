@@ -81,9 +81,4 @@ star's spectral type and place it on the Hertzsprung–Russell diagram.
 
 ## Next steps
 
-Possible extensions of the model:
-
-- Incorporate the temporal evolution of the star as hydrogen is consumed.
-- Let the chemical composition vary with distance from the center.
-- Consider additional sources of opacity.
-- Extend support to low-mass stars.
+Planned extensions and open work are tracked in [roadmap.md](roadmap.md).
