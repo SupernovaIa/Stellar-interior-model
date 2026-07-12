@@ -24,7 +24,26 @@ uv run python main.py
 ```
 
 `main.py` builds a `StellarModel` from the parameters in `config/config.yaml`,
-computes the model and prints the total relative error at the transition layer.
+computes the model and prints a summary (total relative error and the fitted
+central temperature, radius and luminosity).
+
+Any parameter can be overridden from the command line, and the central
+temperature can be optimized on the fly:
+
+```bash
+# Override individual parameters (defaults come from config.yaml)
+uv run python main.py --mass 5.0 -X 0.75 -Y 0.22 --radius 11.5 --luminosity 70
+
+# Sweep the central temperature over [1.5, 2.5) K and keep the best fit
+uv run python main.py --optimize-temperature 1.5 2.5 0.05
+
+# Save the full profile to data/my_star.csv
+uv run python main.py --save my_star
+```
+
+See `uv run python main.py --help` for the full list of options. If the
+integration diverges for the given parameters the program exits with a clear
+message instead of a traceback.
 
 ## Configuration
 
