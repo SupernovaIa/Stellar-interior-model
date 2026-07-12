@@ -343,8 +343,12 @@ class StellarModel:
         Returns:
         - i: The index of the last layer of the convective core.
         """
-        # We start at the layer i = 81 if we integrate from the surface to the center
-        # We start at the layer i = 2 if we integrate from the center to the surface
+        # The starting index `i` is passed in by the caller and is NOT a fixed
+        # number: for the surface->center integration it is the last radiative
+        # layer returned by radiative_envelope() (which depends on the step size
+        # `h` and therefore on the number of layers), and for the center->surface
+        # integration it is the last central layer returned by three_layers_core()
+        # (index 2). Do not hardcode these values.
         while True:
             est_T = self.T[i] + self.h * self.dT_dr[i] + 1/2 * self.delta_1(i, self.dT_dr)
 
