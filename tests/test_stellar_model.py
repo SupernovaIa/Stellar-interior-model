@@ -98,3 +98,11 @@ def test_test_star_profile_regression(test_star):
 def test_error_is_finite(test_star, star):
     assert np.isfinite(test_star.error)
     assert np.isfinite(star.error)
+
+
+def test_diverging_parameters_raise_runtimeerror():
+    # Non-physical / diverging inputs must fail with a clear RuntimeError rather
+    # than hanging or silently producing NaN profiles.
+    star = StellarModel(5.0, 0.75, 0.22, 1.5, 11.5, 40.0)
+    with pytest.raises(RuntimeError):
+        star.complete_model()

@@ -154,7 +154,7 @@ class StellarModel:
         """
         i = 2 # We start at the third layer
 
-        while True:
+        while i + 1 < len(self.R):
             est_P = self.P[i] + self.h * self.dP_dr[i] + 1/2 * self.delta_1(i, self.dP_dr) + 5/12 * self.delta_2(i, self.dP_dr)
             est_T = self.T[i] + self.h * self.dT_dr[i] + 1/2 * self.delta_1(i, self.dT_dr)
 
@@ -198,6 +198,12 @@ class StellarModel:
             else:
                 # We compute the next layer
                 i += 1
+        else:
+            raise RuntimeError(
+                "Radiative envelope never became convective: the transport "
+                "parameter stayed >= 2.5 down to the center. Check the input "
+                "parameters (mass, composition, radius, luminosity)."
+            )
 
         # Constant polytropic index
         self.k_polytrope = self.P[i+1]/(self.T[i+1]**(5/2))
@@ -222,10 +228,18 @@ class StellarModel:
         # `h` and therefore on the number of layers), and for the center->surface
         # integration it is the last central layer returned by three_layers_core()
         # (index 2). Do not hardcode these values.
-        while True:
+        while i + 1 < len(self.R):
             est_T = self.T[i] + self.h * self.dT_dr[i] + 1/2 * self.delta_1(i, self.dT_dr)
 
             for _ in range(max_iter):
+                # A non-positive temperature is non-physical and would make the
+                # polytrope P = k * T^(5/2) undefined (NaN). Fail fast with a
+                # clear error instead of spinning until max_iter on NaNs.
+                if est_T <= 0:
+                    raise RuntimeError(
+                        f"Non-physical (non-positive) temperature at layer {i+1}; "
+                        "the integration diverged for these parameters."
+                    )
                 # We compute the pressure as a polytrope
                 est_P = self.k_polytrope * est_T ** (5/2)
                 self.dM_dr[i+1] = self.C_m * est_P * self.R[i+1] ** 2 / est_T
@@ -267,6 +281,11 @@ class StellarModel:
 
             else:
                 i += 1
+        else:
+            raise RuntimeError(
+                "Convective core integration ran past the radius grid without "
+                "reaching the expected boundary."
+            )
 
         return i
     
