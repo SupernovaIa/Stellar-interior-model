@@ -1,5 +1,7 @@
 # Stellar Interior Simulation
 
+[![CI](https://github.com/SupernovaIa/Stellar-interior-model/actions/workflows/ci.yml/badge.svg)](https://github.com/SupernovaIa/Stellar-interior-model/actions/workflows/ci.yml)
+
 A numerical model of the interior of a massive main-sequence star (`M > 2 M☉`)
 with a **convective core** and a **radiative envelope**. The model integrates the
 equations of stellar structure from the surface inward and from the center
