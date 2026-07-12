@@ -52,3 +52,21 @@ def test_optimal_grid_calculation_is_consistent():
     # stored central temperature and error (self-consistency of the selection).
     optimal_temperature_calculation(model, T_values)
     assert model.T_central in T_values
+
+
+def test_optimal_grid_calculation_tolerates_diverging_cells():
+    # A grid mixing converging (L = 70) and diverging (L = 40) columns must
+    # complete, marking the diverging cells with infinite error and selecting a
+    # finite best instead of aborting the whole search.
+    R_values = np.array([11.0, 12.0])
+    L_values = np.array([40.0, 70.0])
+    T_values = np.arange(1.5, 2.5, 0.1)
+
+    model = StellarModel(M_test, X_test, Y_test, T_test, R_test, L_test)
+    matrix_error = optimal_grid_calculation(model, R_values, L_values, T_values)
+
+    assert np.isinf(matrix_error).any()     # some parameter sets diverged
+    assert np.isfinite(matrix_error).any()  # some converged
+    assert np.isfinite(model.error)         # the selected best is finite
+    assert model.error == pytest.approx(matrix_error[np.isfinite(matrix_error)].min(), rel=1e-9)
+    assert model.L_total == 70.0            # the converging column

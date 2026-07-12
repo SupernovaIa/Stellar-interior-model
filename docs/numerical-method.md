@@ -52,6 +52,12 @@ Each loop is capped at `max_iter` iterations (default $10^4$, in
 `config/config.yaml`). If a layer fails to converge within that many iterations
 the model raises a `RuntimeError` instead of looping forever.
 
+The solver also fails cleanly on non-physical states rather than emitting NaNs:
+a non-positive temperature (which would make the polytrope $P = k\,T^{5/2}$
+undefined) raises immediately, and the layer loops are bounded by the radius grid
+so a run that never reaches its expected boundary raises a `RuntimeError` instead
+of an opaque `IndexError`.
+
 ## 4. Transition layer matching
 
 The transition radius $R_\mathrm{down}$ is found by interpolating the transport
@@ -80,7 +86,9 @@ take the model instance to optimize:
   2-D grid search over $(R_\mathrm{total}, L_\mathrm{total})$, optimizing $T_c$ at
   each grid point.
 
-The best-fit model is then recomputed and its full profiles stored.
+The best-fit model is then recomputed and its full profiles stored. Parameter
+sets for which the integration diverges are recorded as an infinite error, so a
+single bad grid point never aborts the whole search.
 
 ## 6. Stitching the full profile
 

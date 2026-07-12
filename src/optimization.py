@@ -54,12 +54,22 @@ def optimal_temperature_calculation(model, T_values):
         # We reinitialize the parameters and arrays
         model.initialize_parameters()
         model.initialize_arrays()
-        # We compute the total relative error for the current central temperature
-        model.complete_model()
-        array_error[i] = model.error
+        # We compute the total relative error for the current central temperature.
+        # A parameter set for which the integration diverges is recorded as an
+        # infinite error so the sweep continues instead of aborting.
+        try:
+            model.complete_model()
+            array_error[i] = model.error
+        except (RuntimeError, IndexError, FloatingPointError, ZeroDivisionError):
+            array_error[i] = np.inf
 
-    model.T_central = T_values[np.argmin(array_error)]
-    model.error = np.min(array_error)
+    best = np.argmin(array_error)
+    model.T_central = T_values[best]
+    model.error = array_error[best]
+
+    if not np.isfinite(model.error):
+        print("No central temperature in the given range produced a converged model.")
+        return array_error
 
     # Now that we have the optimal temperature, we compute the complete model
     model.initialize_parameters()
@@ -67,10 +77,10 @@ def optimal_temperature_calculation(model, T_values):
     model.complete_model()
 
     # Print the central temperature that minimizes the total relative error
-    print("Central Temperature that minimizes the Total Relative Error (K):", T_values[np.argmin(array_error)])
+    print("Central Temperature that minimizes the Total Relative Error (K):", model.T_central)
 
     # Print the minimum total relative error
-    print("Minimum Total Relative Error (%):", np.min(array_error))
+    print("Minimum Total Relative Error (%):", model.error)
 
     return array_error
 
