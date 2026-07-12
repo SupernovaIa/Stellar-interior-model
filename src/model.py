@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from config.config import K, Na, max_err, max_iter
+from src.energy import energy_generation_rate
 
 class StellarModel:
     def __init__(self, M_total, X, Y, T_central, R_total, L_total):
@@ -129,130 +130,6 @@ class StellarModel:
         return self.delta_1(i, values) - self.delta_1(i-1, values)
     
 
-    def pp_chain(self, T, P):
-        """
-        Computes the energy generation rate for the pp chain and the associated parameters.
-        
-        Parameters:
-        - T: Temperature (in units of 10^7 K).
-        - P: Pressure (in CGS units).
-        
-        Returns:
-        - epsilon_pp: Energy generation rate for the pp chain.
-        - nu_pp: Exponent for the temperature dependence of the pp chain.
-        - cycle: Type of nuclear cycle (pp chain).
-        - C_l_pp: Coefficient for the energy generation rate.
-        """
-        if T < 0.4:
-            return 0, 0, "NA", 0
-        elif T < 0.6:
-            nu_pp = 6
-            epsilon_pp_1 = 10**(-6.84)
-        elif T < 0.95:
-            nu_pp = 5
-            epsilon_pp_1 = 10**(-6.04)
-        elif T < 1.2:
-            nu_pp = 4.5
-            epsilon_pp_1 = 10**(-5.56)
-        elif T < 1.65:
-            nu_pp = 4
-            epsilon_pp_1 = 10**(-5.02)
-        elif T < 2.4:
-            nu_pp = 3.5
-            epsilon_pp_1 = 10**(-4.40)
-        else:
-            nu_pp = 1
-            epsilon_pp_1 = 0
-
-        Rho = self.mu * P / (K * Na * T)
-        epsilon_pp = epsilon_pp_1 * self.X * self.X * Rho * (T * 10)**nu_pp
-        cycle = 'pp'
-        C_l_pp = 0.01845 * epsilon_pp_1 * self.X * self.X * (10 ** nu_pp) * (self.mu ** 2)
-
-        return epsilon_pp, nu_pp, cycle, C_l_pp
-    
-
-    def CNO_cycle(self, T, P):
-        """
-        Computes the energy generation rate for the CNO cycle and the associated parameters.
-
-        Parameters:
-        - T: Temperature (in units of 10^7 K).
-        - P: Pressure (in CGS units).
-
-        Returns:
-        - epsilon_CNO: Energy generation rate for the CNO cycle.
-        - nu_CNO: Exponent for the temperature dependence of the CNO cycle.
-        - cycle: Type of nuclear cycle (CNO cycle).
-        - C_l_CNO: Coefficient for the energy generation rate.
-        """
-        if T < 1.2:
-            nu_CNO = 0
-            epsilon_CNO_1 = 0
-        elif T < 1.6:
-            nu_CNO = 20
-            epsilon_CNO_1 = 10**(-22.2)
-        elif T < 2.25:
-            nu_CNO = 18
-            epsilon_CNO_1 = 10**(-19.8)
-        elif T < 2.75:
-            nu_CNO = 16
-            epsilon_CNO_1 = 10**(-17.1)
-        elif T < 3.6:
-            nu_CNO = 15
-            epsilon_CNO_1 = 10**(-15.6)
-        elif T < 5:
-            nu_CNO = 13
-            epsilon_CNO_1 = 10**(-12.5)
-        else:
-            nu_CNO = 1
-            epsilon_CNO_1 = 0
-
-        Rho = self.mu * P / (K * Na * T)
-        epsilon_CNO = epsilon_CNO_1 * self.X * (self.Z/3) * Rho * (T * 10)**nu_CNO
-        cycle = 'CNO'
-        C_l_CNO = 0.01845 * epsilon_CNO_1 * self.X * (self.Z/3) * (10 ** nu_CNO) * (self.mu ** 2)
-
-        return epsilon_CNO, nu_CNO, cycle, C_l_CNO
-    
-
-    def energy_generation_rate(self, T, P):
-        """
-        Computes the energy generation rate and associated parameters based on the temperature and pressure.
-
-        Parameters:
-        - T: Temperature (in units of 10^7 K).
-        - P: Pressure (in CGS units).
-
-        Returns:
-        - epsilon: Energy generation rate.
-        - nu: Exponent for the temperature dependence.
-        - cycle: Type of nuclear cycle.
-        - C_l: Coefficient for the energy generation rate.
-        """
-        if T < 1.2:
-            epsilon, nu, cycle, C_l = self.pp_chain(T, P)
-        elif T > 2.4:
-            epsilon, nu, cycle, C_l = self.CNO_cycle(T, P)
-        else:
-            epsilon_pp, nu_pp, cycle_pp, C_l_pp = self.pp_chain(T, P)
-            epsilon_CNO, nu_CNO, cycle_CNO, C_l_CNO = self.CNO_cycle(T, P)
-
-            if epsilon_pp > epsilon_CNO:
-                epsilon = epsilon_pp
-                nu = nu_pp
-                cycle = cycle_pp
-                C_l = C_l_pp
-
-            else:
-                epsilon = epsilon_CNO
-                nu = nu_CNO
-                cycle = cycle_CNO
-                C_l = C_l_CNO
-
-        return epsilon, nu, cycle, C_l
-    
-
     def three_layers_surface(self):
         """
         Computes the properties of the first three layers of the star starting from the surface.
@@ -299,7 +176,7 @@ class StellarModel:
                 else:
                     raise RuntimeError(f"Pressure did not converge at layer {i+1} after {max_iter} iterations")
 
-                self.epsilon[i+1], self.nu[i+1], self.cycle[i+1], self.C_l[i+1] = self.energy_generation_rate(est_T, cal_P)
+                self.epsilon[i+1], self.nu[i+1], self.cycle[i+1], self.C_l[i+1] = energy_generation_rate(est_T, cal_P, self.X, self.Z, self.mu)
                 self.dL_dr[i+1] = self.C_l[i+1] * (cal_P ** 2) * (est_T ** (self.nu[i+1] - 2)) * (self.R[i+1] ** 2)
                 cal_L = self.L[i] + self.h * self.dL_dr[i+1] - 1/2 * self.delta_1(i+1, self.dL_dr) - 1/12 * self.delta_2(i+1, self.dL_dr)
                 self.dT_dr[i+1] = -self.C_t_rad * cal_P ** 2 * cal_L / ((est_T ** (8.5)) * (self.R[i+1] ** 2))
@@ -375,7 +252,7 @@ class StellarModel:
             # We compute the pressure as a polytrope
             # Caution! Now is calculated values instead of estimated values
             cal_P = self.k_polytrope * cal_T ** (5/2)
-            self.epsilon[i+1], self.nu[i+1], self.cycle[i+1], self.C_l[i+1] = self.energy_generation_rate(est_T, cal_P)
+            self.epsilon[i+1], self.nu[i+1], self.cycle[i+1], self.C_l[i+1] = energy_generation_rate(est_T, cal_P, self.X, self.Z, self.mu)
             self.dL_dr[i+1] = self.C_l[i+1] * (cal_P ** 2) * (cal_T ** (self.nu[i+1] - 2)) * (self.R[i+1] ** 2) 
             cal_L = self.L[i] + self.h * self.dL_dr[i+1] - 1/2 * self.delta_1(i+1, self.dL_dr) - 1/12 * self.delta_2(i+1, self.dL_dr)
 
@@ -462,7 +339,7 @@ class StellarModel:
             self.T[i] = self.T_central - 0.008207 * (self.mu ** 2) * (self.k_polytrope) * (self.T_central ** 1.5) * (self.R[i] ** 2)
             self.P[i] = self.k_polytrope * (self.T[i] ** 2.5)
             self.M[i] = (self.C_m / 3) * self.k_polytrope * (self.T_central ** 1.5) * (self.R[i] ** 3)
-            self.epsilon[i], self.nu[i], self.cycle[i], self.C_l[i] = self.energy_generation_rate(self.T[i], self.P[i])
+            self.epsilon[i], self.nu[i], self.cycle[i], self.C_l[i] = energy_generation_rate(self.T[i], self.P[i], self.X, self.Z, self.mu)
             self.L[i] = (self.C_l[i] / 3) * (self.k_polytrope ** 2) * (self.T_central ** (self.nu[i] + 3)) * (self.R[i] ** 3)
 
             # We must compute the gradient of the variables
@@ -739,7 +616,7 @@ class StellarModel:
                 self.Rho[i] = self.mu * self.P[i] / (K * Na * self.T[i])
 
             # Compute the energy generation rate
-            self.epsilon[i], self.nu[i], self.cycle[i], self.C_l[i] = self.energy_generation_rate(self.T[i], self.P[i])
+            self.epsilon[i], self.nu[i], self.cycle[i], self.C_l[i] = energy_generation_rate(self.T[i], self.P[i], self.X, self.Z, self.mu)
 
 
     def plot_normalized_variables(self, variable = 'all', independent_variable = 'radius', vertical_line = False):
