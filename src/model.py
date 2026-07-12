@@ -172,6 +172,12 @@ class StellarModel:
                 else:
                     raise RuntimeError(f"Pressure did not converge at layer {i+1} after {max_iter} iterations")
 
+                # Energy generation (and the L and T derivatives below) is evaluated
+                # at (est_T, cal_P): est_T is the current temperature iterate of this
+                # outer fixed-point loop, and cal_P is the pressure just converged for
+                # it in the inner loop. The outer loop exits only once est_T and the
+                # resulting cal_T agree to within max_err, so at convergence these are
+                # the layer's temperature and pressure to within solver tolerance.
                 self.epsilon[i+1], self.nu[i+1], self.cycle[i+1], self.C_l[i+1] = energy_generation_rate(est_T, cal_P, self.X, self.Z, self.mu)
                 self.dL_dr[i+1] = self.C_l[i+1] * (cal_P ** 2) * (est_T ** (self.nu[i+1] - 2)) * (self.R[i+1] ** 2)
                 cal_L = self.L[i] + self.h * self.dL_dr[i+1] - 1/2 * self.delta_1(i+1, self.dL_dr) - 1/12 * self.delta_2(i+1, self.dL_dr)
@@ -262,6 +268,9 @@ class StellarModel:
             # We compute the pressure as a polytrope
             # Caution! Now is calculated values instead of estimated values
             cal_P = self.k_polytrope * cal_T ** (5/2)
+            # The energy rate is evaluated at est_T while cal_P and dL_dr below use
+            # cal_T. The temperature loop above converged est_T -> cal_T to within
+            # max_err, so the two temperatures coincide to solver tolerance here.
             self.epsilon[i+1], self.nu[i+1], self.cycle[i+1], self.C_l[i+1] = energy_generation_rate(est_T, cal_P, self.X, self.Z, self.mu)
             self.dL_dr[i+1] = self.C_l[i+1] * (cal_P ** 2) * (cal_T ** (self.nu[i+1] - 2)) * (self.R[i+1] ** 2) 
             cal_L = self.L[i] + self.h * self.dL_dr[i+1] - 1/2 * self.delta_1(i+1, self.dL_dr) - 1/12 * self.delta_2(i+1, self.dL_dr)
