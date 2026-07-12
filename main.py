@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from config.config import K, Na, max_err, M_total, X, Y, T_central, R_total, L_total, M_test, X_test, Y_test, T_test, R_test, L_test
-from src.star_class import StellarModel
+from src.model import StellarModel
 
 
 def main():

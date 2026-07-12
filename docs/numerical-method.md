@@ -1,6 +1,6 @@
 # Numerical method
 
-This document describes how [`src/star_class.py`](../src/star_class.py)
+This document describes how [`src/model.py`](../src/model.py)
 integrates the equations of [physics.md](physics.md) and how it solves for the
 unknown parameters.
 

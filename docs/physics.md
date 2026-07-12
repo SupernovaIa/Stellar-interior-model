@@ -1,7 +1,7 @@
 # Physics
 
 This document describes the physical model implemented in
-[`src/star_class.py`](../src/star_class.py) and the equations it integrates.
+[`src/model.py`](../src/model.py) and the equations it integrates.
 
 ## 1. The model
 

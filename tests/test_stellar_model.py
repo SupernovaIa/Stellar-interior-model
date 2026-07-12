@@ -23,7 +23,7 @@ from config.config import (
     R_test,
     L_test,
 )
-from src.star_class import StellarModel
+from src.model import StellarModel
 
 
 def _build_model(params):

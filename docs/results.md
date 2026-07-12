@@ -21,7 +21,7 @@ Reproduce the temperature optimization with:
 ```python
 import numpy as np
 from config.config import M_test, X_test, Y_test, T_test, R_test, L_test
-from src.star_class import StellarModel
+from src.model import StellarModel
 
 star = StellarModel(M_test, X_test, Y_test, T_test, R_test, L_test)
 star.optimal_temperature_calculation(np.arange(1.5, 2.5, 0.05))

@@ -1,7 +1,7 @@
 # Code structure
 
 The project is small and centered on a single class,
-`StellarModel`, in [`src/star_class.py`](../src/star_class.py).
+`StellarModel`, in [`src/model.py`](../src/model.py).
 
 ```
 Stellar-interior-model
@@ -9,7 +9,7 @@ Stellar-interior-model
 │   ├── config.yaml   # parameters — single source of truth
 │   └── config.py     # loads the YAML and exposes the values
 ├── src/
-│   └── star_class.py # the StellarModel class
+│   └── model.py # the StellarModel class
 ├── notebook/
 │   └── model_execution.ipynb
 ├── tests/
