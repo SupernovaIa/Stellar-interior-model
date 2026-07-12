@@ -28,7 +28,26 @@ StellarInteriorSimulation
 
 ## 🔧 Installation and Requirements
 
-WIP
+The project uses [uv](https://docs.astral.sh/uv/) for dependency management. With uv installed:
+
+```bash
+# Install the runtime dependencies (numpy, matplotlib, pandas, pyyaml)
+uv sync
+
+# Run the simulation
+uv run python main.py
+```
+
+To also install the dependencies needed to run the Jupyter notebook:
+
+```bash
+uv sync --group notebook
+uv run jupyter lab
+```
+
+The simulation parameters (chemical composition, initial radius, luminosity and
+central temperature) are defined in `config/config.yaml`, the single source of
+truth for the configuration.
 
 
 ## 📊 Results

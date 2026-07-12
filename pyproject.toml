@@ -1,0 +1,22 @@
+[project]
+name = "stellar-interior-model"
+version = "0.1.0"
+description = "Numerical model of the interior of a massive main-sequence star with a convective core and a radiative envelope"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Javier Carreira" }]
+dependencies = [
+    "numpy>=1.26",
+    "matplotlib>=3.8",
+    "pandas>=2.1",
+    "pyyaml>=6.0",
+]
+
+[dependency-groups]
+notebook = [
+    "jupyter>=1.0",
+    "ipykernel>=6.29",
+]
+
+[tool.uv]
+package = false
