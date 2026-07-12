@@ -6,6 +6,7 @@ physical_constants:
 
 numerical_parameters:
   max_err: 1.0e-4  # Maximum allowed error in numerical integrations
+  max_iter: 10000  # Maximum iterations allowed for a convergence loop before failing
 
 test_star:
   M_test: 5.0  # Test star total mass

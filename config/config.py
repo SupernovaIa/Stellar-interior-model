@@ -19,6 +19,7 @@ Na = _config["physical_constants"]["Na"]  # Avogadro's number, dimensionless
 
 # Numerical parameters
 max_err = _config["numerical_parameters"]["max_err"]  # Maximum allowed integration error
+max_iter = _config["numerical_parameters"]["max_iter"]  # Max iterations per convergence loop
 
 # Star model parameters
 _star = _config["star_model"]

@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from config.config import K, Na, max_err
+from config.config import K, Na, max_err, max_iter
 
 class StellarModel:
     def __init__(self, M_total, X, Y, T_central, R_total, L_total):
@@ -285,8 +285,8 @@ class StellarModel:
             est_P = self.P[i] + self.h * self.dP_dr[i] + 1/2 * self.delta_1(i, self.dP_dr) + 5/12 * self.delta_2(i, self.dP_dr)
             est_T = self.T[i] + self.h * self.dT_dr[i] + 1/2 * self.delta_1(i, self.dT_dr)
 
-            while True:
-                while True:
+            for _ in range(max_iter):
+                for _ in range(max_iter):
                     self.dM_dr[i+1] = self.C_m * est_P * self.R[i+1] ** 2 / est_T
                     cal_M = self.M[i] + self.h * self.dM_dr[i+1] - 1/2 * self.delta_1(i+1, self.dM_dr)
                     self.dP_dr[i+1] = -self.C_p * est_P * cal_M / (est_T * self.R[i+1] ** 2)
@@ -296,7 +296,9 @@ class StellarModel:
                         break
                     else:
                         est_P = cal_P
-            
+                else:
+                    raise RuntimeError(f"Pressure did not converge at layer {i+1} after {max_iter} iterations")
+
                 self.epsilon[i+1], self.nu[i+1], self.cycle[i+1], self.C_l[i+1] = self.energy_generation_rate(est_T, cal_P)
                 self.dL_dr[i+1] = self.C_l[i+1] * (cal_P ** 2) * (est_T ** (self.nu[i+1] - 2)) * (self.R[i+1] ** 2)
                 cal_L = self.L[i] + self.h * self.dL_dr[i+1] - 1/2 * self.delta_1(i+1, self.dL_dr) - 1/12 * self.delta_2(i+1, self.dL_dr)
@@ -308,6 +310,8 @@ class StellarModel:
                 else:
                     est_T = cal_T
                     est_P = cal_P
+            else:
+                raise RuntimeError(f"Temperature did not converge at layer {i+1} after {max_iter} iterations")
 
             self.transport_parameter[i+1] = (cal_T / cal_P) * (self.dP_dr[i+1] / self.dT_dr[i+1])
         
@@ -344,7 +348,7 @@ class StellarModel:
         while True:
             est_T = self.T[i] + self.h * self.dT_dr[i] + 1/2 * self.delta_1(i, self.dT_dr)
 
-            while True:
+            for _ in range(max_iter):
                 # We compute the pressure as a polytrope
                 est_P = self.k_polytrope * est_T ** (5/2)
                 self.dM_dr[i+1] = self.C_m * est_P * self.R[i+1] ** 2 / est_T
@@ -361,6 +365,8 @@ class StellarModel:
 
                 else:
                     est_T = cal_T
+            else:
+                raise RuntimeError(f"Temperature did not converge at layer {i+1} after {max_iter} iterations")
 
             # We compute the pressure as a polytrope
             # Caution! Now is calculated values instead of estimated values
