@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -65,7 +67,9 @@ class StellarModel:
         # Initialize the energy generation rate and transport parameter arrays
         self.epsilon = np.zeros_like(self.R)
         self.nu = np.zeros_like(self.R)
-        self.cycle = np.zeros_like(self.R, dtype=str)
+        # Use dtype=object so full cycle labels ('pp', 'CNO', 'NA') are stored
+        # without being truncated to a single character (as dtype=str would do).
+        self.cycle = np.zeros(self.R.shape, dtype=object)
         self.C_l = np.zeros_like(self.R)
         self.transport_parameter = np.zeros_like(self.R)
 
@@ -713,7 +717,7 @@ class StellarModel:
         self.Rho = np.zeros_like(self.R)
         self.epsilon = np.zeros_like(self.R)
         self.nu = np.zeros_like(self.R)
-        self.cycle = np.zeros_like(self.R, dtype=str)
+        self.cycle = np.zeros(self.R.shape, dtype=object)
         self.C_l = np.zeros_like(self.R)
 
         for i in range(len(self.T)):
@@ -840,5 +844,10 @@ class StellarModel:
             'Cycle': self.cycle,
         })
 
+        # Resolve the data directory relative to the project root (parent of src/)
+        # so the output location does not depend on the current working directory.
+        data_dir = Path(__file__).resolve().parent.parent / "data"
+        data_dir.mkdir(parents=True, exist_ok=True)
+
         # Save the DataFrame to a CSV file
-        df.to_csv(f"../data/{filename}.csv", index=False)
+        df.to_csv(data_dir / f"{filename}.csv", index=False)
