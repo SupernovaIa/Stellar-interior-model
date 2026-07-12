@@ -22,9 +22,10 @@ Reproduce the temperature optimization with:
 import numpy as np
 from config.config import M_test, X_test, Y_test, T_test, R_test, L_test
 from src.model import StellarModel
+from src.optimization import optimal_temperature_calculation
 
 star = StellarModel(M_test, X_test, Y_test, T_test, R_test, L_test)
-star.optimal_temperature_calculation(np.arange(1.5, 2.5, 0.05))
+optimal_temperature_calculation(star, np.arange(1.5, 2.5, 0.05))
 # -> minimum error 16.82 % at T_central = 1.95
 ```
 
@@ -45,11 +46,14 @@ The complete workflow — parameter optimization, profile plots and HR-diagram
 classification — is in
 [`notebook/model_execution.ipynb`](../notebook/model_execution.ipynb).
 
-Visualization helpers on `StellarModel`:
+Visualization helpers live in [`src/plotting.py`](../src/plotting.py) and take a
+solved model:
 
-- `plot_normalized_variables(...)` — normalized profiles vs radius or mass.
-- `plot_array_error(...)` — error vs central temperature.
-- `plot_matrix_error(...)` — error heat-map over the $(R, L)$ grid.
+- `plot_normalized_variables(model, ...)` — normalized profiles vs radius or mass.
+- `plot_array_error(T_values, array_error)` — error vs central temperature.
+- `plot_matrix_error(matrix_error, R_values, L_values)` — error heat-map over the
+  $(R, L)$ grid.
+- `save_data(model, filename)` — export the full profile to `data/<filename>.csv`.
 
 ## Conclusions
 

@@ -1,27 +1,41 @@
 # Code structure
 
-The project is small and centered on a single class,
-`StellarModel`, in [`src/model.py`](../src/model.py).
+The solver is split into focused modules under `src/`. `StellarModel`
+([`src/model.py`](../src/model.py)) is the numerical integrator; energy
+generation, parameter search and visualization live alongside it as independent
+modules.
 
 ```
 Stellar-interior-model
 ├── config/
-│   ├── config.yaml   # parameters — single source of truth
-│   └── config.py     # loads the YAML and exposes the values
+│   ├── config.yaml     # parameters — single source of truth
+│   └── config.py       # loads the YAML and exposes the values
 ├── src/
-│   └── model.py # the StellarModel class
+│   ├── model.py        # StellarModel — the integrator (core)
+│   ├── energy.py       # nuclear energy generation (pure functions)
+│   ├── optimization.py # parameter search over T_c, R, L
+│   └── plotting.py     # profile plots and CSV export
 ├── notebook/
 │   └── model_execution.ipynb
 ├── tests/
 │   └── test_stellar_model.py
-└── main.py           # entry point
+└── main.py             # entry point
 ```
 
-## The `StellarModel` class
+## `src/energy.py`
 
-State is held as NumPy arrays indexed by layer: `R`, `P`, `T`, `M`, `L`, their
-gradients (`dP_dr`, `dT_dr`, `dM_dr`, `dL_dr`), and per-layer diagnostics
-(`epsilon`, `nu`, `cycle`, `C_l`, `transport_parameter`).
+Stateless functions for the energy generation rate, depending only on the local
+$(T, P)$ and the composition:
+
+- **`pp_chain(T, P, X, mu)`**, **`CNO_cycle(T, P, X, Z, mu)`** — piecewise rates
+  and their luminosity coefficients.
+- **`energy_generation_rate(T, P, X, Z, mu)`** — picks the dominant cycle.
+
+## `src/model.py` — the `StellarModel` class
+
+The core coupled solver. State is held as NumPy arrays indexed by layer: `R`,
+`P`, `T`, `M`, `L`, their gradients (`dP_dr`, `dT_dr`, `dM_dr`, `dL_dr`), and
+per-layer diagnostics (`epsilon`, `nu`, `cycle`, `C_l`, `transport_parameter`).
 
 ### Setup
 
@@ -37,12 +51,6 @@ gradients (`dP_dr`, `dT_dr`, `dM_dr`, `dL_dr`), and per-layer diagnostics
   inward (`"surface"`) or outward (`"center"`).
 - **`delta_1`, `delta_2`** — the first/second discrete difference operators used
   by the predictor–corrector scheme.
-
-### Energy generation
-
-- **`pp_chain`, `CNO_cycle`** — piecewise energy generation rates and their
-  coefficients.
-- **`energy_generation_rate`** — picks the dominant cycle at a given $(T, P)$.
 
 ### Integration
 
@@ -64,20 +72,30 @@ gradients (`dP_dr`, `dT_dr`, `dM_dr`, `dL_dr`), and per-layer diagnostics
   center seed → convective core (up) → transition (up) → error → append extra
   layers.
 
-### Optimization
-
-- **`optimal_temperature_calculation`** — 1-D sweep over $T_c$.
-- **`optimal_grid_calculation`** — 2-D grid over $(R_\mathrm{total}, L_\mathrm{total})$.
-
 ### Post-processing
 
 - **`extra_layers`** — analytic layers between $0.9\,R_\mathrm{total}$ and the
   surface, appended by `complete_model`.
 - **`extra_variables_calculation`** — fills density and energy generation across
   the full radius array.
-- **`plot_normalized_variables`, `plot_array_error`, `plot_matrix_error`** —
-  plotting helpers.
-- **`save_data`** — writes the full profile to `data/<filename>.csv`.
+
+## `src/optimization.py`
+
+Functions that take a `StellarModel`, mutate its parameters in place and leave it
+recomputed at the best fit:
+
+- **`optimal_temperature_calculation(model, T_values)`** — 1-D sweep over $T_c$.
+- **`optimal_grid_calculation(model, R_values, L_values, T_values)`** — 2-D grid
+  over $(R_\mathrm{total}, L_\mathrm{total})$.
+
+## `src/plotting.py`
+
+Visualization and export helpers for a solved model:
+
+- **`plot_normalized_variables(model, ...)`** — normalized profiles.
+- **`plot_array_error(...)`, `plot_matrix_error(...)`** — error diagnostics.
+- **`save_data(model, filename)`** — writes the full profile to
+  `data/<filename>.csv`.
 
 ## A note on the stored arrays
 

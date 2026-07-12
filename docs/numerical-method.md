@@ -70,13 +70,15 @@ E = \sqrt{\sum_x e_x^2}\ \ [\%].$$
 ## 5. Solving for the unknowns
 
 $E$ is a function of the three initially unknown parameters
-$(T_c, R_\mathrm{total}, L_\mathrm{total})$, which are refined by minimizing it:
+$(T_c, R_\mathrm{total}, L_\mathrm{total})$, which are refined by minimizing it.
+The search routines live in [`src/optimization.py`](../src/optimization.py) and
+take the model instance to optimize:
 
-- **`optimal_temperature_calculation(T_values)`** sweeps a range of central
+- **`optimal_temperature_calculation(model, T_values)`** sweeps a range of central
   temperatures and keeps the one that minimizes $E$.
-- **`optimal_grid_calculation(R_values, L_values, T_values)`** performs a 2-D grid
-  search over $(R_\mathrm{total}, L_\mathrm{total})$, optimizing $T_c$ at each grid
-  point.
+- **`optimal_grid_calculation(model, R_values, L_values, T_values)`** performs a
+  2-D grid search over $(R_\mathrm{total}, L_\mathrm{total})$, optimizing $T_c$ at
+  each grid point.
 
 The best-fit model is then recomputed and its full profiles stored.
 
