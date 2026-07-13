@@ -5,7 +5,51 @@ They depend only on the local temperature and pressure and the star's
 composition, so they carry no state.
 """
 
+from math import inf
+
 from config.config import K, Na
+
+# Temperature regimes for each cycle. Each row is (T_upper, nu, epsilon_1):
+# the first row whose upper bound exceeds T wins. The final inf row is the
+# fallback that used to be the `else` branch of the if/elif chains. T is in
+# units of 10^7 K.
+_PP_REGIMES = [
+    (0.6, 6, 10**(-6.84)),
+    (0.95, 5, 10**(-6.04)),
+    (1.2, 4.5, 10**(-5.56)),
+    (1.65, 4, 10**(-5.02)),
+    (2.4, 3.5, 10**(-4.40)),
+    (inf, 1, 0),
+]
+
+_CNO_REGIMES = [
+    (1.2, 0, 0),
+    (1.6, 20, 10**(-22.2)),
+    (2.25, 18, 10**(-19.8)),
+    (2.75, 16, 10**(-17.1)),
+    (3.6, 15, 10**(-15.6)),
+    (5, 13, 10**(-12.5)),
+    (inf, 1, 0),
+]
+
+
+def _select_regime(T, regimes):
+    """Return the (nu, epsilon_1) of the first regime whose upper T bound exceeds T."""
+    for T_upper, nu, epsilon_1 in regimes:
+        if T < T_upper:
+            return nu, epsilon_1
+
+
+def _reaction_rate(T, P, mu, abundance, nu, epsilon_1, cycle):
+    """Shared energy generation physics for both cycles.
+
+    `abundance` is the composition-dependent factor: X^2 for the pp chain and
+    X * Z/3 for the CNO cycle.
+    """
+    Rho = mu * P / (K * Na * T)
+    epsilon = epsilon_1 * abundance * Rho * (T * 10)**nu
+    C_l = 0.01845 * epsilon_1 * abundance * (10 ** nu) * (mu ** 2)
+    return epsilon, nu, cycle, C_l
 
 
 def pp_chain(T, P, X, mu):
@@ -26,31 +70,8 @@ def pp_chain(T, P, X, mu):
     """
     if T < 0.4:
         return 0, 0, "NA", 0
-    elif T < 0.6:
-        nu_pp = 6
-        epsilon_pp_1 = 10**(-6.84)
-    elif T < 0.95:
-        nu_pp = 5
-        epsilon_pp_1 = 10**(-6.04)
-    elif T < 1.2:
-        nu_pp = 4.5
-        epsilon_pp_1 = 10**(-5.56)
-    elif T < 1.65:
-        nu_pp = 4
-        epsilon_pp_1 = 10**(-5.02)
-    elif T < 2.4:
-        nu_pp = 3.5
-        epsilon_pp_1 = 10**(-4.40)
-    else:
-        nu_pp = 1
-        epsilon_pp_1 = 0
-
-    Rho = mu * P / (K * Na * T)
-    epsilon_pp = epsilon_pp_1 * X * X * Rho * (T * 10)**nu_pp
-    cycle = 'pp'
-    C_l_pp = 0.01845 * epsilon_pp_1 * X * X * (10 ** nu_pp) * (mu ** 2)
-
-    return epsilon_pp, nu_pp, cycle, C_l_pp
+    nu_pp, epsilon_pp_1 = _select_regime(T, _PP_REGIMES)
+    return _reaction_rate(T, P, mu, X * X, nu_pp, epsilon_pp_1, "pp")
 
 
 def CNO_cycle(T, P, X, Z, mu):
@@ -70,34 +91,8 @@ def CNO_cycle(T, P, X, Z, mu):
     - cycle: Type of nuclear cycle (CNO cycle).
     - C_l_CNO: Coefficient for the energy generation rate.
     """
-    if T < 1.2:
-        nu_CNO = 0
-        epsilon_CNO_1 = 0
-    elif T < 1.6:
-        nu_CNO = 20
-        epsilon_CNO_1 = 10**(-22.2)
-    elif T < 2.25:
-        nu_CNO = 18
-        epsilon_CNO_1 = 10**(-19.8)
-    elif T < 2.75:
-        nu_CNO = 16
-        epsilon_CNO_1 = 10**(-17.1)
-    elif T < 3.6:
-        nu_CNO = 15
-        epsilon_CNO_1 = 10**(-15.6)
-    elif T < 5:
-        nu_CNO = 13
-        epsilon_CNO_1 = 10**(-12.5)
-    else:
-        nu_CNO = 1
-        epsilon_CNO_1 = 0
-
-    Rho = mu * P / (K * Na * T)
-    epsilon_CNO = epsilon_CNO_1 * X * (Z/3) * Rho * (T * 10)**nu_CNO
-    cycle = 'CNO'
-    C_l_CNO = 0.01845 * epsilon_CNO_1 * X * (Z/3) * (10 ** nu_CNO) * (mu ** 2)
-
-    return epsilon_CNO, nu_CNO, cycle, C_l_CNO
+    nu_CNO, epsilon_CNO_1 = _select_regime(T, _CNO_REGIMES)
+    return _reaction_rate(T, P, mu, X * (Z / 3), nu_CNO, epsilon_CNO_1, "CNO")
 
 
 def energy_generation_rate(T, P, X, Z, mu):
